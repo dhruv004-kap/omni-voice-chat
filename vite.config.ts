@@ -4,19 +4,45 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-    hmr: {
-      overlay: false,
+export default defineConfig(({ mode }) => {
+  const isNgrok = process.env.VITE_NGROK_MODE === "true";
+
+  return {
+    base: "/",
+    server: {
+      host: "0.0.0.0",
+      port: 3050,
+      strictPort: false,
+      allowedHosts: "all",
+      hmr: isNgrok ? false : true,
+      middlewareMode: false,
     },
-  },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+    build: {
+      outDir: "dist",
+      sourcemap: false,
+      minify: "terser",
+      terserOptions: {
+        compress: {
+          drop_console: false,
+        },
+        mangle: {
+          reserved: ["React", "ReactDOM"],
+        },
+      },
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ["react", "react-dom", "react-router-dom"],
+          },
+        },
+      },
     },
-    dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
-  },
-}));
+    plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
+      dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
+    },
+  };
+});
