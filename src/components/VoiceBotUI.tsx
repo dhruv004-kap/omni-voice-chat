@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Phone, PhoneOff, Mic, MicOff, FileText, Settings } from "lucide-react";
 import { useWebSocketVoice } from "@/hooks/useWebSocketVoice";
 import { TranscriptPanel } from "@/components/TranscriptPanel";
@@ -27,10 +27,58 @@ export function VoiceBotUI() {
     clearHistory,
   } = useWebSocketVoice(wsUrl);
   const showWaveform = isStreaming || isUserSpeaking;
+  const backgroundDots = useMemo(
+    () =>
+      Array.from({ length: 10 }, (_, index) => ({
+        id: index,
+        left: 8 + Math.random() * 84,
+        top: 10 + Math.random() * 78,
+        size: 4 + Math.random() * 4,
+        duration: 2.4 + Math.random() * 2.2,
+        delay: Math.random() * 1.8,
+      })),
+    [],
+  );
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#060606]">
-      {/* Ambient glow line */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(19,142,115,0.12),transparent_32%),radial-gradient(circle_at_80%_22%,rgba(0,180,160,0.09),transparent_24%),radial-gradient(circle_at_18%_78%,rgba(22,120,100,0.08),transparent_26%)]" />
+        <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-[hsl(160_80%_45%/0.08)] blur-3xl animate-float-slow" />
+        <div className="absolute right-12 top-1/4 h-56 w-56 rounded-full bg-[hsl(190_100%_50%/0.08)] blur-3xl animate-float-delayed" />
+        <div className="absolute bottom-16 left-1/4 h-64 w-64 rounded-full bg-[hsl(160_90%_40%/0.06)] blur-3xl animate-float-medium" />
+
+        <div className="absolute left-[8%] top-[18%] h-24 w-24 rounded-full border border-[hsl(160_90%_58%/0.08)] animate-orbit-drift" />
+        <div className="absolute right-[12%] top-[64%] h-16 w-16 rounded-full border border-[hsl(190_100%_50%/0.08)] animate-orbit-drift-reverse" />
+
+        {backgroundDots.map((dot) => (
+          <span
+            key={dot.id}
+            className="absolute rotate-45 bg-[hsl(160_90%_58%/0.75)] blur-[1px] shadow-[0_0_14px_hsl(160_90%_58%/0.45)]"
+            style={{
+              left: `${dot.left}%`,
+              top: `${dot.top}%`,
+              width: `${dot.size}px`,
+              height: `${dot.size}px`,
+              animation: `signal-blink ${dot.duration}s ease-in-out ${dot.delay}s infinite`,
+              clipPath:
+                "polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%)",
+            }}
+          />
+        ))}
+
+        {[18, 34, 48, 62, 76].map((top, index) => (
+          <div
+            key={top}
+            className="absolute left-10 right-10 h-px bg-gradient-to-r from-transparent via-[hsl(160_90%_58%/0.06)] to-transparent"
+            style={{
+              top: `${top}%`,
+              animation: `line-shimmer ${5 + index * 0.5}s linear ${index * 0.25}s infinite`,
+            }}
+          />
+        ))}
+      </div>
+
       {/* Settings gear */}
       <button
         onClick={() => setShowSettings(!showSettings)}
@@ -70,7 +118,7 @@ export function VoiceBotUI() {
               <span className="text-[hsl(160_80%_55%)]">VELO</span>
             </h1>
             <p className="mt-2 text-sm text-muted-foreground tracking-[0.28em] uppercase">
-              Voice Agent
+              The Voice Agent
             </p>
           </div>
 
@@ -206,6 +254,63 @@ export function VoiceBotUI() {
         @keyframes voice-wave {
           0%, 100% { transform: scaleY(0.25); opacity: 0.35; }
           50% { transform: scaleY(1); opacity: 1; }
+        }
+
+        @keyframes signal-blink {
+          0%, 100% { opacity: 0.18; transform: scale(0.8); }
+          45% { opacity: 1; transform: scale(1.35); }
+          70% { opacity: 0.35; transform: scale(0.95); }
+        }
+
+        @keyframes line-shimmer {
+          0% { opacity: 0.18; transform: scaleX(0.9); }
+          50% { opacity: 0.42; transform: scaleX(1); }
+          100% { opacity: 0.18; transform: scaleX(0.9); }
+        }
+
+        @keyframes float-slow {
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(28px, -20px, 0); }
+        }
+
+        @keyframes float-medium {
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(-22px, 18px, 0); }
+        }
+
+        @keyframes float-delayed {
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(-18px, -24px, 0); }
+        }
+
+        @keyframes orbit-drift {
+          0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0.22; }
+          50% { transform: translate3d(18px, -14px, 0) rotate(180deg); opacity: 0.45; }
+        }
+
+        @keyframes orbit-drift-reverse {
+          0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0.18; }
+          50% { transform: translate3d(-16px, 12px, 0) rotate(-180deg); opacity: 0.4; }
+        }
+
+        .animate-float-slow {
+          animation: float-slow 11s ease-in-out infinite;
+        }
+
+        .animate-float-medium {
+          animation: float-medium 9s ease-in-out infinite;
+        }
+
+        .animate-float-delayed {
+          animation: float-delayed 13s ease-in-out infinite;
+        }
+
+        .animate-orbit-drift {
+          animation: orbit-drift 12s ease-in-out infinite;
+        }
+
+        .animate-orbit-drift-reverse {
+          animation: orbit-drift-reverse 10s ease-in-out infinite;
         }
       `}</style>
     </div>
